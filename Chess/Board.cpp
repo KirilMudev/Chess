@@ -47,7 +47,7 @@ void Board::copyBoard(Board const& other)
 
 void Board::initBoard()
 {
-	//allocates space for the pieces on the board
+	//allocates memory for the pieces on the board
 	chessBoard = new Piece**[BOARD_SIZE];
 	for (int i = 0; i < BOARD_SIZE; i++)
 	{
@@ -55,10 +55,10 @@ void Board::initBoard()
 	}
 
 	//sets the positions of the "inactive" pieces or the empty spots on the board
-	int counter = 2;
+	int counter = 2; //start after the first two rows
 	for (int j = 6; j > 2; j--)
 	{
-		for (int k = 0; k < 8; k++)
+		for (int k = 0; k < BOARD_SIZE; k++)
 		{
 			chessBoard[counter][k] = nullptr; 
 		}
@@ -75,6 +75,7 @@ void Board::clearMemory()
 			delete chessBoard[i][j];
 		}
 	}
+
 	delete[] chessBoard;
 	delete[] kings;
 }
@@ -95,62 +96,67 @@ void Board::initPawns()
 	{
 		if (i >= 8)
 		{
-			chessBoard[6][i - BOARD_SIZE ] = new Pawn(White,'P',this,Position(xCoordinate(i - BOARD_SIZE), 2));
+			chessBoard[6][i - BOARD_SIZE ] = new Pawn(White, 'P', this, Position(xCoordinate(i - BOARD_SIZE), 2));
 		}
 		else
 		{
-			chessBoard[1][i] = new Pawn(Black,'p',this,Position((xCoordinate)i, 7));
+			chessBoard[1][i] = new Pawn(Black, 'p', this, Position((xCoordinate)i, 7));
 		}			
 	}
 }
 
 void Board::initTowers()
 {
-	chessBoard[7][0] = new Tower(White,'T',this,Position(a,1));
-	chessBoard[7][7] = new Tower(White,'T',this,Position(h,1));
+	//whites
+	chessBoard[7][0] = new Tower(White, 'T', this, Position(a,1));
+	chessBoard[7][7] = new Tower(White, 'T', this, Position(h,1));
 
 	//blacks
-	chessBoard[0][0] = new Tower(Black,'t',this,Position(a,8));
-	chessBoard[0][7] = new Tower(Black,'t',this,Position(h,8));
+	chessBoard[0][0] = new Tower(Black, 't', this, Position(a,8));
+	chessBoard[0][7] = new Tower(Black, 't', this, Position(h,8));
 }
 
 void Board::initKnights()
 {
-	chessBoard[7][1] = new Knight(White,'K',this,Position(b,1));
-	chessBoard[7][6] = new Knight(White,'K',this,Position(g,1));
+	//whites
+	chessBoard[7][1] = new Knight(White, 'K', this, Position(b,1));
+	chessBoard[7][6] = new Knight(White, 'K', this, Position(g,1));
 
 	//blacks
-	chessBoard[0][1] = new Knight(Black,'k',this,Position(b,8));
-	chessBoard[0][6] = new Knight(Black,'k',this,Position(g,8));
+	chessBoard[0][1] = new Knight(Black, 'k', this, Position(b,8));
+	chessBoard[0][6] = new Knight(Black, 'k', this, Position(g,8));
 }
 
 void Board::initBishops()
 {
+	//whites
 	chessBoard[7][2] = new Bishop(White, 'B', this, Position(c,1));
-	chessBoard[7][5] = new Bishop(White, 'B',this,Position(f,1));
+	chessBoard[7][5] = new Bishop(White, 'B', this, Position(f,1));
 
 	//blacks
 	chessBoard[0][2] = new Bishop(Black, 'b', this, Position(c,8));
-	chessBoard[0][5] = new Bishop(Black, 'b',this,Position(f,8));
+	chessBoard[0][5] = new Bishop(Black, 'b', this, Position(f,8));
 }
 
 void Board::initQueens()	
 {
-	chessBoard[7][3] = new Queen(White,'Q',this,Position(d,1));
+	//white
+	chessBoard[7][3] = new Queen(White, 'Q', this, Position(d,1));
 
-	//blacks
-	chessBoard[0][3] = new Queen(Black,'q',this,Position(d,8));
+	//black
+	chessBoard[0][3] = new Queen(Black, 'q', this, Position(d,8));
 }
 
 void Board::initKings()
 {
+	//white
 	kings = new King*[2];
 	kings[0] = new King(White,'O',this,Position(e,1));
-	chessBoard[7][4] = kings[0];
+	chessBoard[7][4] = kings[WHITE_KING_ID];
 
-	//blacks
+	//black
 	kings[1] = new King(Black,'o',this,Position(e,8));
-	chessBoard[0][4] = kings[1];
+	chessBoard[0][4] = kings[BLACK_KING_ID];
 }
 
 void Board::setTurn(Colour _turn)
@@ -249,11 +255,11 @@ void Board::move(Position oldPos, Position newPos)
 	this->getPieceOnBoard(oldPos)->calculatePossiblePositions();
 
 	//by here we will have all the possibles calculated
-	int pPLen = getPieceOnBoard(oldPos)->getPossiblePositionsSize();
+	int possibleLength = getPieceOnBoard(oldPos)->getPossiblePositionsSize();
 	
 	bool isAvailable = false;
 
-	for (int i = 0; i <= pPLen; i++)
+	for (int i = 0; i <= possibleLength; i++)
 	{
 		if (newPos == getPieceOnBoard(oldPos)->getPossiblePositionAt(i))
 		{
@@ -264,27 +270,25 @@ void Board::move(Position oldPos, Position newPos)
 	
 	if (isAvailable && this->getStatus() == normal)
 	{
-		Piece * tempNewPos = this->getPieceOnBoard(newPos); //chessBoard[8-newPos.getY()][newPos.getX()];
+		Piece * tempNewPos = this->getPieceOnBoard(newPos);
 
 		//setting the pointer from new to point to old and also set the position of the new
 		if (this->getPieceOnBoard(newPos) != nullptr)
 		{
-			this->getPieceOnBoard(newPos)->resetPiece(); 
-			//this currently creates 10 new cells for each taken piece
+			this->getPieceOnBoard(newPos)->resetPiece(); //new position, all possibles are cleared
 		}
 
-		chessBoard[BOARD_SIZE - newPos.getY()][newPos.getX()] = chessBoard[BOARD_SIZE - oldPos.getY()][oldPos.getX()]; //very important 
+		chessBoard[BOARD_SIZE - newPos.getY()][newPos.getX()] = chessBoard[BOARD_SIZE - oldPos.getY()][oldPos.getX()];
 		this->getPieceOnBoard(newPos)->setPosition(newPos);
 		chessBoard[BOARD_SIZE - oldPos.getY()][oldPos.getX()] = nullptr;
 		
 		//PAWN SPECIAL
 		//we check if the piece is a Pawn, if it is, we mark it as moved (so it can no longer make double step)
-		if(dynamic_cast<Pawn*>(this->getPieceOnBoard(newPos)))
+		if (dynamic_cast<Pawn*>(this->getPieceOnBoard(newPos)))
 			dynamic_cast<Pawn*>(this->getPieceOnBoard(newPos))->setMovedOnce(true);
 
-
 		//if the pawn has reached the final row, then we can promote it to another piece
-		if(dynamic_cast<Pawn*>(this->getPieceOnBoard(newPos)) &&
+		if (dynamic_cast<Pawn*>(this->getPieceOnBoard(newPos)) &&
 			dynamic_cast<Pawn*>(this->getPieceOnBoard(newPos))->isPawnReadyToSwap())
 		{
 			this->pawnPromotion(newPos);
@@ -294,11 +298,11 @@ void Board::move(Position oldPos, Position newPos)
 		//KING SPECIAL	
 		if (this->getTurn() == White)
 		{
-			this->sandBoxCheckVerify(0);	
+			this->sandBoxCheckVerify(WHITE_KING_ID);	
 		}
 		else
 		{
-			this->sandBoxCheckVerify(1);	
+			this->sandBoxCheckVerify(BLACK_KING_ID);	
 		}
 
 		if (this->status == check)
@@ -312,9 +316,7 @@ void Board::move(Position oldPos, Position newPos)
 		}
 		//END OF KING SPECIAL
 
-		this->checkVerification(turn);
-		//can be optimized.
-
+		this->fullCheckVerification(turn); //can be optimized
 
 		if (getPieceOnBoard(newPos)->getColour() == White)
 		{
@@ -337,11 +339,11 @@ void Board::move(Position oldPos, Position newPos)
 
 		if (this->getTurn() == White)
 		{
-			this->sandBoxCheckVerify(0);
+			this->sandBoxCheckVerify(WHITE_KING_ID);
 		}
 		else
 		{
-			this->sandBoxCheckVerify(1);
+			this->sandBoxCheckVerify(BLACK_KING_ID);
 		}
 		
 		if (this->getStatus() == check)
@@ -373,16 +375,16 @@ void Board::move(Position oldPos, Position newPos)
 	}
 } 
 
-void Board::checkVerification(Colour turn)
+void Board::fullCheckVerification(Colour turn)
 {
 	int kingIndex;
 	if (turn == White)
 	{
-		kingIndex = 1;
+		kingIndex = BLACK_KING_ID;
 	}
 	else
 	{
-		kingIndex = 0;
+		kingIndex = WHITE_KING_ID;
 	}
 
 	for (int i = 0; i < BOARD_SIZE; i++)
@@ -401,7 +403,7 @@ void Board::checkVerification(Colour turn)
 						if (chessBoard[i][j]->getPossiblePositionAt(k) == kings[kingIndex]->getPosition())
 						{
 							this->setStatus(check);
-							this->mateVerification(turn,i,j,kingIndex);
+							this->mateVerification(turn, i, j, kingIndex);
 							return;
 						}
 					}
@@ -411,7 +413,7 @@ void Board::checkVerification(Colour turn)
 	}
 }
                                              
-void Board::mateVerification(Colour turn, int i, int j,  int kingIndex)
+void Board::mateVerification(Colour turn, int i, int j,  int kingIndex) //kingIndex is the index of the king in check.
 {				
 	bool mateFlag = true;
 	
@@ -421,72 +423,72 @@ void Board::mateVerification(Colour turn, int i, int j,  int kingIndex)
 	for (int m = 0; m <= kings[kingIndex]->getPossiblePositionsSize(); m++)
 	{
 		//coordinates
-		int t = kings[kingIndex]->getPossiblePositionAt(m).getX();
-		int s = BOARD_SIZE - kings[kingIndex]->getPossiblePositionAt(m).getY();
+		int possibleX = kings[kingIndex]->getPossiblePositionAt(m).getX(); 
+		int possibleY = BOARD_SIZE - kings[kingIndex]->getPossiblePositionAt(m).getY(); 
 
-		int n = kings[kingIndex]->getPosition().getX();
-		int p = BOARD_SIZE - kings[kingIndex]->getPosition().getY();
+		int currX = kings[kingIndex]->getPosition().getX(); 
+		int currY = BOARD_SIZE - kings[kingIndex]->getPosition().getY();
 
-		Piece * temp = chessBoard[s][t]; //newPosition pointer
+		Piece * temp = chessBoard[possibleY][possibleX]; //newPosition pointer
 										
 
-		if (chessBoard[s][t] != nullptr)
+		if (chessBoard[possibleY][possibleX] != nullptr)
 		{										
-			Position tempNewPos(chessBoard[s][t]->getPosition());	
+			Position tempNewPos(chessBoard[possibleY][possibleX]->getPosition());	
 		    Position tempOldPos(kings[kingIndex]->getPosition());
 
-			chessBoard[s][t] = chessBoard[p][n];
-			chessBoard[s][t]->setPosition(tempNewPos);
-			chessBoard[p][n] = nullptr;
+			chessBoard[possibleY][possibleX] = chessBoard[currY][currX];
+			chessBoard[possibleY][possibleX]->setPosition(tempNewPos);
+			chessBoard[currY][currX] = nullptr;
 		
 			this->setStatus(normal);
 			this->sandBoxCheckVerify(kingIndex);	
 
 			if (this->getStatus() == normal)
 			{
-				chessBoard[p][n] = chessBoard[s][t];
-				chessBoard[p][n]->setPosition(tempOldPos);
-				chessBoard[s][t] = temp;
+				chessBoard[currY][currX] = chessBoard[possibleY][possibleX];
+				chessBoard[currY][currX]->setPosition(tempOldPos);
+				chessBoard[possibleY][possibleX] = temp;
 				mateFlag = false;
 				this->setStatus(check);
 				break; //maybe even return
 			}
 			else
 			{
-				chessBoard[p][n] = chessBoard[s][t];
-				chessBoard[p][n]->setPosition(tempOldPos);
-				chessBoard[s][t] = temp;
+				chessBoard[currY][currX] = chessBoard[possibleY][possibleX];
+				chessBoard[currY][currX]->setPosition(tempOldPos);
+				chessBoard[possibleY][possibleX] = temp;
 			}
 		}
-		else //if its e nullptr
+		else //if its nullptr
 		{
 			Position tempOldPos(kings[kingIndex]->getPosition());
-			Position tempNewPos((xCoordinate)t,(s + BOARD_SIZE));
-			chessBoard[s][t] = chessBoard[p][n];
+			Position tempNewPos((xCoordinate)possibleX,(possibleY + BOARD_SIZE));
+			chessBoard[possibleY][possibleX] = chessBoard[currY][currX];
 
-			chessBoard[s][t]->setPosition(tempNewPos);
+			chessBoard[possibleY][possibleX]->setPosition(tempNewPos);
 		
-			chessBoard[p][n] = nullptr;
+			chessBoard[currY][currX] = nullptr;
 			this->setStatus(normal);
 
 			this->sandBoxCheckVerify(kingIndex); 
 			
 			if (this->getStatus() == normal)
 			{
-				chessBoard[p][n] = chessBoard[s][t];
-				chessBoard[p][n]->setPosition(tempOldPos);
+				chessBoard[currY][currX] = chessBoard[possibleY][possibleX];
+				chessBoard[currY][currX]->setPosition(tempOldPos);
 				
-				chessBoard[s][t] = temp;
+				chessBoard[possibleY][possibleX] = temp;
 				mateFlag = false;
 				this->setStatus(check);
 				break;
 			}
 			else
 			{
-				chessBoard[p][n] = chessBoard[s][t];
-				chessBoard[p][n]->setPosition(tempOldPos);
+				chessBoard[currY][currX] = chessBoard[possibleY][possibleX];
+				chessBoard[currY][currX]->setPosition(tempOldPos);
 				
-				chessBoard[s][t] = temp;
+				chessBoard[possibleY][possibleX] = temp;
 			}
 		}
 	}
@@ -497,7 +499,7 @@ void Board::mateVerification(Colour turn, int i, int j,  int kingIndex)
 		{
 			if (chessBoard[p][n] != nullptr)
 			{                                                  
-				if (chessBoard[p][n]->getColour() != turn && !(chessBoard[p][n]->getPosition() == kings[1]->getPosition()))
+				if (chessBoard[p][n]->getColour() != turn && !(chessBoard[p][n]->getPosition() == kings[kingIndex]->getPosition()))
 				{
 					chessBoard[p][n]->resetPiece();
 					chessBoard[p][n]->calculatePossiblePositions();
@@ -519,11 +521,11 @@ void Board::mateVerification(Colour turn, int i, int j,  int kingIndex)
 
 							if (this->getTurn() == White)
 							{		
-								this->sandBoxCheckVerify(1);	 
+								this->sandBoxCheckVerify(BLACK_KING_ID);	 
 							}
 							else
 							{
-								this->sandBoxCheckVerify(0);
+								this->sandBoxCheckVerify(WHITE_KING_ID);
 							}
 		
 							if (this->getStatus() == check)
@@ -630,7 +632,7 @@ void Board::pawnPromotion(Position pawnPosition)
 void Board::sandBoxCheckVerify(int kingId)
 {
 	Colour flag;
-	(kingId == 1) ? flag = White : flag = Black;
+	(kingId == BLACK_KING_ID) ? flag = White : flag = Black;
 	for (int c = 0; c < BOARD_SIZE; c++) 
 	{
 		for (int v = 0; v < BOARD_SIZE; v++) 

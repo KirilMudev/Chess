@@ -49,7 +49,7 @@ public:
 	//The methods below are not well optimised and haven't been heavily tested, but they seem to pass a certain amount of tests.
 
 	void move(Position oldPos, Position newPos); // Main logic of the game is here. (more info inside)
-	void checkVerification(Colour _nextTurn); // Logic to determine check/mate.
+	void fullCheckVerification(Colour _nextTurn); // Logic to determine check/mate.
 	void mateVerification(Colour turn, int checkGiverX, int checkGiverY,  int kingIndex); // Heavy logic, including sandboxing a move and determining if a "mate" is present on the board. 
 	void pawnPromotion(Position pawnPosition); // Used when a pawn reaches the end of the board in order to promote it.
 	
